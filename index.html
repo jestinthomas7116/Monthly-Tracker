@@ -271,13 +271,13 @@
    this one device (no sync), exactly like before.
    ====================================================================== */
 const FB = {
-  apiKey:            "AIzaSyDKEaC19CjFXboplC7zmhE73ofI-scwfWU",
+  apiKey:            "PASTE_API_KEY",
   authDomain:        "the-jc-budget.firebaseapp.com",
   databaseURL:       "https://the-jc-budget-default-rtdb.europe-west1.firebasedatabase.app",
   projectId:         "the-jc-budget",
   storageBucket:     "the-jc-budget.appspot.com",
-  messagingSenderId: "541713709243",
-  appId:             "1:541713709243:web:0422e07c96f21a26fc519e"
+  messagingSenderId: "PASTE_SENDER_ID",
+  appId:             "PASTE_APP_ID"
 };
 const ROOM = "justin-boba-household";  // shared household id — keep it the same on both phones
 const FB_ON = !!FB.databaseURL && !Object.values(FB).some(v=>String(v).indexOf("PASTE_")>=0);
@@ -360,6 +360,15 @@ function applyRefundRouting(t,newRefund,newAcct){
   t.refund=newRefund;t.refundAccount=(newRefund>0?newAcct:null);
 }
 function reverseRefundRouting(t){if(t&&t.refundApplied){setAccountBalance(t.refundAcctApplied,-t.refundApplied);t.refundApplied=0;t.refundAcctApplied=null;}}
+/* Auto-adjust account balances as money moves. Each entry remembers what it applied
+   so deleting it cleanly reverses. Balances stay directly editable by tapping a tile. */
+function applyExpenseToAccount(t){if(t&&t.account){setAccountBalance(t.account,-t.amount);t.acctApplied=t.account;}}
+function reverseExpenseFromAccount(t){if(t&&t.acctApplied){setAccountBalance(t.acctApplied,t.amount);t.acctApplied=null;}}
+function applyTransfer(tr){setAccountBalance(tr.from,-tr.amount);setAccountBalance(tr.to,tr.amount);tr.applied=true;}
+function reverseTransfer(tr){if(tr&&tr.applied){setAccountBalance(tr.from,tr.amount);setAccountBalance(tr.to,-tr.amount);tr.applied=false;}}
+function applyLoan(L){if(L&&L.account){setAccountBalance(L.account,-L.amount);L.acctApplied=L.account;L.amtApplied=L.amount;}}
+function reverseLoan(L){if(!L)return;if(L.acctApplied){setAccountBalance(L.acctApplied,(L.amtApplied!=null?L.amtApplied:L.amount));L.acctApplied=null;}(L.repayments||[]).forEach(r=>{if(r.applied){setAccountBalance(r.account,-r.amount);r.applied=false;}});}
+function applyRepayment(r){if(r&&r.account){setAccountBalance(r.account,r.amount);r.applied=true;}}
 function calc(){
   const m=ensureMonth();
   const inAct=state.config.people.reduce((s,p)=>s+(m.income[p.id]||0),0);
@@ -555,7 +564,8 @@ function addExpenseModal(preHead){
   hs.onchange=sync;sync();
   document.getElementById("mSave").onclick=async()=>{const a=Math.round(parseFloat(document.getElementById("mAmt").value)*100)/100;if(!(a>0)){document.getElementById("mAmt").focus();return;}
     const h=hs.value,sub=(state.config.heads.find(x=>x.id===h)||{}).subs?ss.value:null,acc=document.getElementById("mAcc").value;
-    ensureMonth().tx.push({id:"e"+Date.now(),seq:nextSeq(),head:h,sub,amount:a,note:document.getElementById("mNote").value.trim(),account:acc,date:monthDate()});
+    const tx={id:"e"+Date.now(),seq:nextSeq(),head:h,sub,amount:a,note:document.getElementById("mNote").value.trim(),account:acc,date:monthDate()};
+    ensureMonth().tx.push(tx);applyExpenseToAccount(tx);
     await save();closeModal();render();flashTile("spent");flashTile("balance");};
 }
 function incomeModal(pid){const p=state.config.people.find(x=>x.id===pid),m=ensureMonth();
@@ -594,7 +604,7 @@ function savingModal(sid){const g=state.config.savings.find(x=>x.id===sid),m=ens
 function accountModal(aid){const a=state.accounts.find(x=>x.id===aid);
   const cur=a.balance!=null?a.balance:0;
   openModal(`<h3>${esc(a.name)}</h3><label>Current balance</label><div class="amt-wrap"><span class="cur">€</span><input id="mAmt" type="number" step="0.01" inputmode="decimal" value="${cur}" autofocus></div>
-    <p style="font-size:12px;color:var(--ink-soft);margin-top:10px;font-weight:600;line-height:1.4">Type the actual amount in this account right now. This is a direct figure — nothing else changes it. Update it whenever money comes in or goes out.</p>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:10px;font-weight:600;line-height:1.4">This balance moves on its own as you log expenses, transfers and refunds from this account. Type here any time to correct it to your real bank figure.</p>
     <button class="save" id="mSave">Save balance</button>`);
   document.getElementById("mSave").onclick=async()=>{a.balance=Math.round((parseFloat(document.getElementById("mAmt").value)||0)*100)/100;state.accountsManual=true;await save();closeModal();render();};}
 function transferModal(){const ck=mk();
@@ -609,7 +619,8 @@ function transferModal(){const ck=mk();
   document.getElementById("mSave").onclick=async()=>{const a=Math.round(parseFloat(document.getElementById("mAmt").value)*100)/100;const from=document.getElementById("mFrom").value,to=toSel.value;
     if(!(a>0)){document.getElementById("mAmt").focus();return;}
     if(from===to){toSel.style.borderColor="var(--red)";return;}
-    ensureMonth().transfers.push({id:"tr"+Date.now(),seq:nextSeq(),from,to,amount:a});
+    const tr={id:"tr"+Date.now(),seq:nextSeq(),from,to,amount:a};
+    ensureMonth().transfers.push(tr);applyTransfer(tr);
     await save();closeModal();render();};}
 function lendSplitModal(){const ck=mk();
   const accs=state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)} — ${eur(acctBal(a))}</option>`).join("");
@@ -644,14 +655,15 @@ function lendSplitModal(){const ck=mk();
   document.getElementById("lSave").onclick=async()=>{const a=Math.round(parseFloat(document.getElementById("lAmt").value)*100)/100;const person=document.getElementById("lPerson").value.trim();
     if(!person){document.getElementById("lPerson").focus();return;}if(!(a>0)){document.getElementById("lAmt").focus();return;}
     ensureMonth();
-    state.loans.push({id:"L"+Date.now(),seq:nextSeq(),person,amount:a,account:document.getElementById("lAcc").value,note:document.getElementById("lNote").value.trim(),origin:"loan",createdMonth:mk(),repayments:[]});
+    const Ln={id:"L"+Date.now(),seq:nextSeq(),person,amount:a,account:document.getElementById("lAcc").value,note:document.getElementById("lNote").value.trim(),origin:"loan",createdMonth:mk(),repayments:[]};
+    state.loans.push(Ln);applyLoan(Ln);
     await save();closeModal();render();flashTile("balance");};
   document.getElementById("spSave").onclick=async()=>{const t=Math.round((parseFloat(tot.value)||0)*100)/100,th=Math.round((parseFloat(their.value)||0)*100)/100,mine=Math.round((t-th)*100)/100;
     const person=document.getElementById("spPerson").value.trim(),acc=document.getElementById("spAcc").value,head=document.getElementById("spHead").value,note=document.getElementById("spNote").value.trim();
     if(!(t>0)){tot.focus();return;}if(th<0||th>t){their.focus();return;}if(th>0&&!person){document.getElementById("spPerson").focus();return;}
     ensureMonth();
-    if(mine>0)ensureMonth().tx.push({id:"e"+Date.now(),seq:nextSeq(),head,sub:null,amount:mine,note:note||"My share",account:acc,date:monthDate()});
-    if(th>0)state.loans.push({id:"L"+(Date.now()+1),seq:nextSeq(),person,amount:th,account:acc,note:note||"Split",origin:"split",createdMonth:mk(),repayments:[]});
+    if(mine>0){const tx={id:"e"+Date.now(),seq:nextSeq(),head,sub:null,amount:mine,note:note||"My share",account:acc,date:monthDate()};ensureMonth().tx.push(tx);applyExpenseToAccount(tx);}
+    if(th>0){const Ls={id:"L"+(Date.now()+1),seq:nextSeq(),person,amount:th,account:acc,note:note||"Split",origin:"split",createdMonth:mk(),repayments:[]};state.loans.push(Ls);applyLoan(Ls);}
     await save();closeModal();render();flashTile("spent");flashTile("balance");};}
 function repaymentModal(lid){const L=state.loans.find(x=>x.id===lid);if(!L)return;const ck=mk();
   const repaid=Math.round((L.repayments||[]).reduce((s,r)=>s+r.amount,0)*100)/100;const out=Math.round((L.amount-repaid)*100)/100;
@@ -663,7 +675,7 @@ function repaymentModal(lid){const L=state.loans.find(x=>x.id===lid);if(!L)retur
     <button class="quick" id="mFull">Mark fully settled — ${eur(out)}</button>
     <button class="save" id="mSave">Record repayment</button>`);
   async function record(amt){const a=Math.min(out,Math.round((amt||0)*100)/100);if(!(a>0)){document.getElementById("mAmt").focus();return;}
-    ensureMonth();L.repayments=L.repayments||[];L.repayments.push({id:"r"+Date.now(),amount:a,month:mk(),account:document.getElementById("mAcc").value});
+    ensureMonth();L.repayments=L.repayments||[];const r={id:"r"+Date.now(),amount:a,month:mk(),account:document.getElementById("mAcc").value};L.repayments.push(r);applyRepayment(r);
     await save();closeModal();render();}
   document.getElementById("mFull").onclick=()=>record(out);
   document.getElementById("mSave").onclick=()=>record(parseFloat(document.getElementById("mAmt").value));}
@@ -772,14 +784,14 @@ document.getElementById("accts").addEventListener("click",e=>{const c=e.target.c
 document.getElementById("income").addEventListener("click",e=>{const c=e.target.closest("[data-pid]");if(c)incomeModal(c.dataset.pid);});
 document.getElementById("savings").addEventListener("click",e=>{const c=e.target.closest("[data-sid]");if(c)savingModal(c.dataset.sid);});
 document.getElementById("loans").addEventListener("click",async e=>{
-  const d=e.target.closest("[data-loandel]");if(d){state.loans=(state.loans||[]).filter(x=>x.id!==d.dataset.loandel);await save();render();return;}
+  const d=e.target.closest("[data-loandel]");if(d){const L=(state.loans||[]).find(x=>x.id===d.dataset.loandel);reverseLoan(L);state.loans=(state.loans||[]).filter(x=>x.id!==d.dataset.loandel);await save();render();return;}
   const c=e.target.closest("[data-loan]");if(c)repaymentModal(c.dataset.loan);});
 document.getElementById("heads").addEventListener("click",e=>{const c=e.target.closest("[data-head]");if(c)addExpenseModal(c.dataset.head);});
 document.getElementById("txlist").addEventListener("click",async e=>{
   const dn=e.target.closest("[data-txdone]");if(dn){const m=ensureMonth();const t=m.tx.find(x=>x.id===dn.dataset.txdone);if(t){t.cleared=!t.cleared;await save();render();}return;}
   const st=e.target.closest("[data-txstat]");if(st){txStatusModal(st.dataset.txstat);return;}
-  const b=e.target.closest("[data-del]");if(b){const m=ensureMonth();const t=m.tx.find(x=>x.id===b.dataset.del);reverseRefundRouting(t);m.tx=m.tx.filter(t=>t.id!==b.dataset.del);await save();render();return;}
-  const tb=e.target.closest("[data-tdel]");if(tb){const m=ensureMonth();m.transfers=(m.transfers||[]).filter(t=>t.id!==tb.dataset.tdel);await save();render();}});
+  const b=e.target.closest("[data-del]");if(b){const m=ensureMonth();const t=m.tx.find(x=>x.id===b.dataset.del);reverseRefundRouting(t);reverseExpenseFromAccount(t);m.tx=m.tx.filter(t=>t.id!==b.dataset.del);await save();render();return;}
+  const tb=e.target.closest("[data-tdel]");if(tb){const m=ensureMonth();const tr=(m.transfers||[]).find(x=>x.id===tb.dataset.tdel);reverseTransfer(tr);m.transfers=(m.transfers||[]).filter(t=>t.id!==tb.dataset.tdel);await save();render();}});
 document.getElementById("chips").addEventListener("click",e=>{const b=e.target.closest("[data-flt]");if(b){shopFilter=b.dataset.flt;renderShopping();fillBars();}});
 document.getElementById("shopping").addEventListener("click",async e=>{
   const t=e.target.closest("[data-shoptoggle]");if(t){const s=state.shopping.find(x=>x.id===t.dataset.shoptoggle);s.done=!s.done;await save();renderShopping();return;}
@@ -933,4 +945,3 @@ startApp();
   resize();init();step();
 })();
 </script>
- 
