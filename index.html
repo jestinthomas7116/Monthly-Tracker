@@ -4,6 +4,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -39,6 +40,19 @@
   .theme{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line-strong);background:var(--card);cursor:pointer;font-size:17px;display:grid;place-items:center;flex:none}
   .syncpill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--ink-soft);background:var(--card);border:1.5px solid var(--line-strong);border-radius:20px;padding:5px 11px;flex:none;white-space:nowrap}
   .syncpill .syncdot{width:8px;height:8px;border-radius:50%;background:var(--done);transition:background .3s}
+  .signout{border:1.5px solid var(--line-strong);background:var(--card);color:var(--ink-soft);border-radius:20px;padding:5px 11px;font:inherit;font-weight:700;font-size:11px;cursor:pointer;flex:none;white-space:nowrap;transition:.15s}
+  .signout:hover{border-color:var(--ink);color:var(--ink)}
+  .loginGate{position:fixed;inset:0;z-index:100;background:var(--paper);background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:22px 22px;display:flex;align-items:center;justify-content:center;padding:24px}
+  .loginCard{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:30px 26px;box-shadow:var(--shadow)}
+  .loginCard .lg-eyebrow{font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--rust);font-weight:700}
+  .loginCard .lg-title{font-family:"Fraunces",serif;font-weight:900;font-size:42px;line-height:.95;letter-spacing:-.02em;margin:2px 0 4px}
+  .loginCard .lg-sub{font-size:13px;color:var(--ink-soft);font-weight:600;margin-bottom:18px}
+  .loginCard .lg-lab{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ink-soft);margin:12px 0 5px}
+  .loginCard .lg-in{width:100%;border:1.5px solid var(--line-strong);background:var(--paper);border-radius:11px;padding:13px 14px;font:inherit;font-size:16px;color:var(--ink)}
+  .loginCard .lg-in:focus{outline:none;border-color:var(--ink)}
+  .loginCard .lg-err{color:var(--red);font-size:12.5px;font-weight:700;min-height:16px;margin-top:10px}
+  .loginCard .lg-btn{margin-top:6px;width:100%;background:var(--ink);color:var(--paper);border:none;border-radius:12px;padding:15px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;transition:.15s}
+  .loginCard .lg-btn:hover{background:var(--rust)} .loginCard .lg-btn:disabled{opacity:.6;cursor:default}
   .syncpill.ok .syncdot{background:var(--green)} .syncpill.ok{color:var(--green)}
   .syncpill.saving .syncdot{background:var(--gold);animation:syncblink 1s infinite} .syncpill.saving{color:var(--gold)}
   .syncpill.off .syncdot{background:var(--red)} .syncpill.off{color:var(--red)}
@@ -204,6 +218,7 @@
     <div><div class="eyebrow">Justin (Chaa) &amp; Boba · Household</div><h1>Budget</h1></div>
     <div class="toprow">
       <span class="syncpill" id="syncPill" title="Sync status"><span class="syncdot"></span><span id="syncTxt">Local</span></span>
+      <button class="signout" id="signoutBtn" style="display:none" title="Sign out">⎋ Sign out</button>
       <button class="theme" id="themeBtn" aria-label="Toggle theme">🌙</button>
       <div class="monthnav">
         <button class="navbtn" id="prev" aria-label="Previous month">‹</button>
@@ -255,6 +270,20 @@
  
 <div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
  
+<div class="loginGate" id="loginGate" style="display:none">
+  <div class="loginCard">
+    <div class="lg-eyebrow">Justin (Chaa) &amp; Boba · Household</div>
+    <div class="lg-title">Budget</div>
+    <p class="lg-sub">Private — please sign in to continue.</p>
+    <label class="lg-lab">Email</label>
+    <input id="lgEmail" class="lg-in" type="email" autocomplete="username" placeholder="you@email.com" autocapitalize="off" spellcheck="false">
+    <label class="lg-lab">Password</label>
+    <input id="lgPass" class="lg-in" type="password" autocomplete="current-password" placeholder="••••••••">
+    <div class="lg-err" id="lgErr"></div>
+    <button class="lg-btn" id="lgBtn">Sign in</button>
+  </div>
+</div>
+ 
 <script>
 /* ======================================================================
    LIVE SYNC SETUP  ·  edit ONLY this block
@@ -271,13 +300,13 @@
    this one device (no sync), exactly like before.
    ====================================================================== */
 const FB = {
-  apiKey:            "AIzaSyDKEaC19CjFXboplC7zmhE73ofI-scwfWU",
+  apiKey:            "PASTE_API_KEY",
   authDomain:        "the-jc-budget.firebaseapp.com",
   databaseURL:       "https://the-jc-budget-default-rtdb.europe-west1.firebasedatabase.app",
   projectId:         "the-jc-budget",
   storageBucket:     "the-jc-budget.appspot.com",
-  messagingSenderId: "541713709243",
-  appId:             "1:541713709243:web:0422e07c96f21a26fc519e"
+  messagingSenderId: "PASTE_SENDER_ID",
+  appId:             "PASTE_APP_ID"
 };
 const ROOM = "justin-boba-household";  // shared household id — keep it the same on both phones
 const FB_ON = !!FB.databaseURL && !Object.values(FB).some(v=>String(v).indexOf("PASTE_")>=0);
@@ -882,30 +911,60 @@ async function localBoot(){
   await save();
   firstBoot();
 }
+let cloudStarted=false;
+function startCloudSync(){
+  if(cloudStarted)return;cloudStarted=true;
+  const db=firebase.database();
+  fbRef=db.ref("households/"+ROOM);
+  db.ref(".info/connected").on("value",s=>{if(fbBooted)setSync(s.val()?"ok":"off");});
+  fbRef.on("value",async snap=>{
+    const remote=snap.val();
+    const j=remote?JSON.stringify(remote):"";
+    if(remote&&remote.config&&remote.months){
+      if(j===lastPush){if(!fbBooted){normalize(remote);firstBoot();}setSync("ok");return;}
+      if(overlay.classList.contains("open")){pendingRemote=remote;setSync("ok");return;}
+      normalize(remote);
+      if(!fbBooted)firstBoot();else{applyTheme();render();}
+      setSync("ok");
+    }else{
+      const local=await load();
+      normalize((local&&local.config&&local.months)?local:buildSeed());
+      if(!fbBooted)firstBoot();
+      cloudSave();
+    }
+  },err=>{console.warn("Firebase:",err&&err.message);if(!fbBooted)localBoot();});
+}
+function showLogin(show){const g=document.getElementById("loginGate");if(g)g.style.display=show?"flex":"none";const so=document.getElementById("signoutBtn");if(so)so.style.display=show?"none":"inline-flex";}
+function friendlyAuthErr(e){const c=(e&&e.code)||"";
+  if(c.indexOf("wrong-password")>=0||c.indexOf("invalid-credential")>=0||c.indexOf("invalid-login")>=0)return "Wrong email or password.";
+  if(c.indexOf("user-not-found")>=0)return "No account with that email.";
+  if(c.indexOf("invalid-email")>=0)return "That doesn't look like a valid email.";
+  if(c.indexOf("too-many-requests")>=0)return "Too many attempts — wait a minute and try again.";
+  if(c.indexOf("network")>=0)return "Network problem — check your connection.";
+  return "Couldn't sign in. "+((e&&e.message)||"");}
+function wireLogin(auth){
+  const btn=document.getElementById("lgBtn"),em=document.getElementById("lgEmail"),pw=document.getElementById("lgPass"),er=document.getElementById("lgErr"),so=document.getElementById("signoutBtn");
+  if(btn){
+    const attempt=()=>{er.textContent="";btn.disabled=true;btn.textContent="Signing in…";
+      auth.signInWithEmailAndPassword((em.value||"").trim(),pw.value||"").catch(e=>{er.textContent=friendlyAuthErr(e);}).finally(()=>{btn.disabled=false;btn.textContent="Sign in";});};
+    btn.onclick=attempt;
+    pw.addEventListener("keydown",e=>{if(e.key==="Enter")attempt();});
+    em.addEventListener("keydown",e=>{if(e.key==="Enter")pw.focus();});
+  }
+  if(so)so.onclick=()=>{auth.signOut();};
+}
 function startApp(){
   if(FB_ON&&typeof firebase!=="undefined"){
     try{
       firebase.initializeApp(FB);
-      const db=firebase.database();
-      fbRef=db.ref("households/"+ROOM);
-      db.ref(".info/connected").on("value",s=>{if(fbBooted)setSync(s.val()?"ok":"off");});
-      fbRef.on("value",async snap=>{
-        const remote=snap.val();
-        const j=remote?JSON.stringify(remote):"";
-        if(remote&&remote.config&&remote.months){
-          if(j===lastPush){if(!fbBooted){normalize(remote);firstBoot();}setSync("ok");return;}
-          if(overlay.classList.contains("open")){pendingRemote=remote;setSync("ok");return;}
-          normalize(remote);
-          if(!fbBooted)firstBoot();else{applyTheme();render();}
-          setSync("ok");
-        }else{
-          // cloud is empty — seed it from this device's data (or defaults) once
-          const local=await load();
-          normalize((local&&local.config&&local.months)?local:buildSeed());
-          if(!fbBooted)firstBoot();
-          cloudSave();
-        }
-      },err=>{console.warn("Firebase:",err&&err.message);if(!fbBooted)localBoot();});
+      const auth=firebase.auth();
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+      wireLogin(auth);
+      showLogin(true);
+      auth.onAuthStateChanged(user=>{
+        if(user){showLogin(false);startCloudSync();}
+        else{showLogin(true);}
+      });
       return;
     }catch(e){console.warn("Firebase init failed:",e);}
   }
@@ -945,3 +1004,4 @@ startApp();
   resize();init();step();
 })();
 </script>
+ 
