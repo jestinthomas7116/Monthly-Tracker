@@ -67,6 +67,39 @@
   .tile.balance{background:var(--ink);color:#f5ecdc} .tile.balance .t-val{color:#f5ecdc} .tile.balance .t-lab{color:rgba(245,236,220,.6)}
   [data-theme="dark"] .tile.balance{background:#0f0c09}
   .tile.income .t-val{color:var(--green)} .tile.spent .t-val{color:var(--rust)} .tile.saved .t-val{color:var(--blue)}
+  .insights{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px}
+  @media(max-width:640px){.insights{grid-template-columns:1fr}}
+  .ins-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+  .ins-card.wide{grid-column:1/-1}
+  .curve{width:100%;height:auto;margin-top:14px;display:block;overflow:visible}
+  .curve .cv-lab{font:600 10px sans-serif;fill:var(--ink-soft)}
+  .splitbar{display:flex;height:16px;border-radius:8px;overflow:hidden;margin-top:6px;background:var(--line)}
+  .splitbar span{display:block;height:100%}
+  .ins-title{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;margin-bottom:10px}
+  .ins-big{font-size:34px;font-weight:800;line-height:1;color:var(--green)} .ins-big.neg{color:var(--red)}
+  .ins-big .ins-unit{font-size:15px;font-weight:700;color:var(--ink-soft)}
+  .ins-cap{font-size:12px;font-weight:700;color:var(--ink-soft);margin-top:6px}
+  .ins-cap2{font-size:11px;font-weight:600;color:var(--ink-soft);margin-top:8px}
+  .ins-bar{height:8px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:11px}
+  .ins-bar span{display:block;height:100%;background:var(--ink);border-radius:6px;transition:width .5s ease}
+  .donut-wrap{display:flex;align-items:center;gap:16px}
+  .donut{width:118px;height:118px;flex:none}
+  .donut .d-tot{font:700 15px "JetBrains Mono",monospace;fill:var(--ink)} .donut .d-sub{font:600 9px sans-serif;fill:var(--ink-soft);letter-spacing:.1em;text-transform:uppercase}
+  .donut-empty{width:118px;height:118px;flex:none;border-radius:50%;border:3px dashed var(--line-strong);display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;font-weight:700;color:var(--ink-soft)}
+  .legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+  .lg-row{display:grid;grid-template-columns:12px 1fr auto auto;align-items:center;gap:8px;font-size:12px}
+  .lg-dot{width:10px;height:10px;border-radius:3px}
+  .acc-sec{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--rust);font-weight:800;margin:18px 0 6px;border-bottom:1px solid var(--line);padding-bottom:5px}
+  .acc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;font-weight:600;color:var(--ink);padding:5px 0}
+  .acc-row.tot{border-top:1px solid var(--line);margin-top:3px;padding-top:8px;font-weight:800}
+  .acc-row .acc-del{border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:13px;padding:0 2px}
+  .acc-row .acc-del:hover{color:var(--rust)}
+  .acc-flag{font-size:12.5px;font-weight:600;color:var(--ink);background:rgba(201,138,30,.12);border-left:3px solid var(--gold);border-radius:6px;padding:8px 10px;margin-bottom:6px;line-height:1.4}
+  .acc-ok{font-size:13px;font-weight:700;color:var(--green);background:rgba(63,125,99,.12);border-radius:6px;padding:9px 11px}
+  .acc-note{font-size:12px;font-weight:700;margin-top:8px;color:var(--ink-soft);line-height:1.4}
+  .acc-cap{font-size:11.5px;color:var(--ink-soft);font-weight:600;line-height:1.4;margin:2px 0 0}
+  .lg-name{font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lg-val{font-weight:700;color:var(--ink)} .lg-pct{font-weight:600;color:var(--ink-soft);min-width:32px;text-align:right}
  
   .accts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}
   @media(min-width:620px){.accts{grid-template-columns:repeat(4,1fr)}}
@@ -215,14 +248,14 @@
 <canvas id="bg"></canvas>
 <div class="wrap">
   <header class="masthead">
-    <div><div class="eyebrow">Justin (Chaa) &amp; Boba · Household</div><h1>Budget</h1></div>
+    <div><div class="eyebrow">Jestin (Chaa) &amp; Boba · Household</div><h1>Budget</h1></div>
     <div class="toprow">
       <span class="syncpill" id="syncPill" title="Sync status"><span class="syncdot"></span><span id="syncTxt">Local</span></span>
       <button class="signout" id="signoutBtn" style="display:none" title="Sign out">⎋ Sign out</button>
       <button class="theme" id="themeBtn" aria-label="Toggle theme">🌙</button>
       <div class="monthnav">
         <button class="navbtn" id="prev" aria-label="Previous month">‹</button>
-        <div class="lbl" id="monthLbl">—</div>
+        <div class="lbl" id="monthLbl" title="Tap to set your pay-cycle day" style="cursor:pointer">—</div>
         <button class="navbtn" id="next" aria-label="Next month">›</button>
       </div>
     </div>
@@ -238,12 +271,15 @@
     <div class="tile balance" style="animation-delay:.14s"><div class="t-lab">Left to spend</div><div class="t-val mono" id="tBal">€0</div></div>
   </div>
  
+  <div class="insights" id="insights"></div>
+ 
   <div class="actions">
     <button class="btn primary" id="addBtn">＋ Add expense</button>
     <button class="btn ghost" id="cfgBtn">⚙ Budgets</button>
     <button class="btn ghost" id="trBtn">↔ Transfer</button>
     <button class="btn ghost" id="lendBtn">👥 Split / Lend</button>
     <button class="btn ghost" id="calcBtn">🧮 Calc</button>
+    <button class="btn ghost" id="acctBtn">📊 Accounting</button>
     <button class="btn ghost" id="xlsBtn">⤓ Excel report</button>
   </div>
  
@@ -272,7 +308,7 @@
  
 <div class="loginGate" id="loginGate" style="display:none">
   <div class="loginCard">
-    <div class="lg-eyebrow">Justin (Chaa) &amp; Boba · Household</div>
+    <div class="lg-eyebrow">Jestin (Chaa) &amp; Boba · Household</div>
     <div class="lg-title">Budget</div>
     <p class="lg-sub">Private — please sign in to continue.</p>
     <label class="lg-lab">Email</label>
@@ -300,7 +336,7 @@
    this one device (no sync), exactly like before.
    ====================================================================== */
 const FB = {
-  apiKey: "AIzaSyDKEaC19CjFXboplC7zmhE73ofI-scwfWU",
+ apiKey: "AIzaSyDKEaC19CjFXboplC7zmhE73ofI-scwfWU",
   authDomain: "the-jc-budget.firebaseapp.com",
   databaseURL: "https://the-jc-budget-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "the-jc-budget",
@@ -317,13 +353,15 @@ const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","De
 const MONF=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const EUR=new Intl.NumberFormat("en-IE",{style:"currency",currency:"EUR",minimumFractionDigits:2,maximumFractionDigits:2});
 const eur=v=>EUR.format(v||0);
+const fmtDay=iso=>{if(!iso)return"";const d=new Date(iso+"T00:00:00");return isNaN(d)?"":d.getDate()+" "+MON[d.getMonth()];};
 const HEADCOLOR={rent:"#bf4e2e",cc:"#5566b0",gold:"#3f7d63",leap:"#2f8a8a",groceries:"#c98a1e",mobile:"#9d4f8c",misc:"#8a7d6b"};
 const colorFor=id=>HEADCOLOR[id]||"#8a7d6b";
 const SHOPLISTS=[{id:"daily",name:"Daily Needs 🛒"},{id:"india",name:"India Trip ✈️"},{id:"general",name:"General"}];
  
 function defaults(){return{
   ui:{theme:"light"},
-  people:[{id:"justin",name:"Justin (Chaa)",income:1863.91},{id:"boba",name:"Boba",income:1529.30}],
+  cycleStartDay:25,
+  people:[{id:"justin",name:"Jestin (Chaa)",income:1863.91},{id:"boba",name:"Boba",income:1529.30}],
   heads:[
     {id:"rent",name:"Rent",budget:975,fixed:true},
     {id:"cc",name:"Credit Card EMI",budget:223.73,fixed:true},
@@ -364,6 +402,19 @@ async function save(){
 let state=null, shopFilter="all";
 let view=new Date(); view.setDate(1); view.setHours(0,0,0,0);
 const mk=()=>view.getFullYear()+"-"+String(view.getMonth()+1).padStart(2,"0");
+/* Pay-cycle model. A period runs from cycleStartDay of its start month to the day
+   before cycleStartDay of the next month. The period KEY stays the start month
+   (so existing data needs no migration). The label shows the real span. */
+const daysInMonth=(y,mo)=>new Date(y,mo+1,0).getDate();
+function cycleDay(){const d=(state&&state.config&&state.config.cycleStartDay)||25;return Math.min(28,Math.max(1,Math.round(d)));}
+function cycleSpan(v){const d=cycleDay(),sY=v.getFullYear(),sM=v.getMonth();
+  const start=new Date(sY,sM,Math.min(d,daysInMonth(sY,sM)));
+  const end=new Date(sY,sM+1,Math.min(d,daysInMonth(sY,sM+1)));end.setDate(end.getDate()-1);
+  return {start,end};}
+function cycleLabel(v){const {start,end}=cycleSpan(v);return start.getDate()+" "+MON[start.getMonth()]+" – "+end.getDate()+" "+MON[end.getMonth()]+" "+end.getFullYear();}
+function currentCycleStart(){const now=new Date(),d=cycleDay(),y=now.getFullYear(),mo=now.getMonth();
+  const startThis=Math.min(d,daysInMonth(y,mo));
+  return now.getDate()>=startThis?new Date(y,mo,1):new Date(y,mo-1,1);}
  
 function ensureMonth(){
   const k=mk();
@@ -407,6 +458,94 @@ function calc(){
   const saved=state.config.savings.reduce((s,g)=>s+(m.savings[g.id]||0),0);
   const budget=state.config.heads.reduce((s,h)=>s+(h.budget||0),0);
   return {m,inAct,spentByHead,spent,saved,budget,budgetLeft:budget-spent,balance:inAct-spent-saved};
+}
+function renderInsights(){
+  const el=document.getElementById("insights");if(!el)return;
+  const {m,spentByHead,spent,budget,budgetLeft}=calc();
+  const {start,end}=cycleSpan(view);
+  const now=new Date();now.setHours(0,0,0,0);
+  const total=Math.max(1,Math.round((end-start)/86400000)+1);
+  const isCurrent=now>=start&&now<=end;
+  let elapsed=Math.round((now-start)/86400000)+1;elapsed=Math.max(1,Math.min(total,elapsed));
+  const daysLeft=isCurrent?Math.max(0,total-elapsed):(now<start?total:0);
+  const perDay=(isCurrent&&daysLeft>0)?(budgetLeft/daysLeft):null;
+  // ---- cumulative spend curve ----
+  const txDay=t=>{if(!t.date)return 0;const d=new Date(t.date+"T00:00:00");if(isNaN(d))return 0;return Math.max(0,Math.min(total-1,Math.floor((d-start)/86400000)));};
+  const dayNet=new Array(total).fill(0);
+  (m.tx||[]).forEach(t=>{dayNet[txDay(t)]+=netOf(t);});
+  const cum=[];let run=0;for(let i=0;i<total;i++){run+=dayNet[i];cum.push(Math.round(run*100)/100);}
+  const finalCum=cum[total-1]||0;
+  const yMax=Math.max(budget,finalCum,1)*1.08;
+  const PADL=10,PADR=10,PADT=14,PADB=24,VW=640,VH=200,PW=VW-PADL-PADR,PH=VH-PADT-PADB;
+  const xFor=i=>total>1?(PADL+i/(total-1)*PW):(PADL+PW/2);
+  const yFor=v=>PADT+PH-(v/yMax)*PH;
+  const baseY=PADT+PH;
+  const idealToday=budget*(elapsed/total);
+  const over=isCurrent&&cum[elapsed-1]>idealToday+0.005;
+  const col=over?"var(--rust)":"var(--green)";
+  let area=`M ${xFor(0).toFixed(1)} ${baseY.toFixed(1)} `;
+  cum.forEach((v,i)=>{area+=`L ${xFor(i).toFixed(1)} ${yFor(v).toFixed(1)} `;});
+  area+=`L ${xFor(total-1).toFixed(1)} ${baseY.toFixed(1)} Z`;
+  const line=cum.map((v,i)=>`${xFor(i).toFixed(1)},${yFor(v).toFixed(1)}`).join(" ");
+  const yC=yFor(budget);
+  const ceiling=budget>0?`<line x1="${PADL}" y1="${yC.toFixed(1)}" x2="${(PADL+PW).toFixed(1)}" y2="${yC.toFixed(1)}" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="4 4" opacity=".6"/><text x="${(PADL+PW).toFixed(1)}" y="${(yC-5).toFixed(1)}" text-anchor="end" class="cv-lab">budget ${eur(budget)}</text>`:"";
+  const ideal=`<line x1="${xFor(0).toFixed(1)}" y1="${yFor(0).toFixed(1)}" x2="${xFor(total-1).toFixed(1)}" y2="${yFor(budget).toFixed(1)}" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 5" opacity=".4"/>`;
+  let marker="";
+  if(isCurrent){const mx=xFor(elapsed-1),my=yFor(cum[elapsed-1]);
+    marker=`<line x1="${mx.toFixed(1)}" y1="${PADT}" x2="${mx.toFixed(1)}" y2="${baseY.toFixed(1)}" stroke="var(--ink)" stroke-width="1" opacity=".25"/><circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="4.5" fill="${col}" stroke="var(--card)" stroke-width="2"/>`;}
+  const curve=`<svg viewBox="0 0 ${VW} ${VH}" class="curve" preserveAspectRatio="none">
+    <path d="${area}" fill="${col}" opacity=".12"/>
+    ${ceiling}${ideal}
+    <polyline points="${line}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>
+    ${marker}
+    <text x="${PADL}" y="${(VH-6)}" class="cv-lab">${start.getDate()} ${MON[start.getMonth()]}</text>
+    <text x="${(PADL+PW).toFixed(1)}" y="${(VH-6)}" text-anchor="end" class="cv-lab">${end.getDate()} ${MON[end.getMonth()]}</text>
+  </svg>`;
+  const paceMsg=isCurrent
+    ? (over?`<span style="color:var(--rust)">Spending faster than the cycle — ${eur(cum[elapsed-1]-idealToday)} ahead of an even pace.</span>`:`<span style="color:var(--green)">On track — ${eur(idealToday-cum[elapsed-1])} under an even pace.</span>`)
+    : `${eur(finalCum)} spent across the cycle.`;
+  const headline=isCurrent&&perDay!=null
+    ? `<div class="ins-big mono ${budgetLeft<0?'neg':''}">${eur(perDay)}<span class="ins-unit"> / day</span></div><div class="ins-cap">safe to spend · ${daysLeft} day${daysLeft===1?'':'s'} left · ${eur(spent)} of ${eur(budget)} used</div>`
+    : `<div class="ins-big mono ${budgetLeft<0?'neg':''}">${eur(budgetLeft)}</div><div class="ins-cap">${now<start?'budget remaining (upcoming)':'left over this cycle'}</div>`;
+  // ---- donut ----
+  const segs=state.config.heads.map(h=>({v:spentByHead[h.id]||0,c:colorFor(h.id),n:h.name})).filter(s=>s.v>0.005).sort((a,b)=>b.v-a.v);
+  const tot=segs.reduce((s,x)=>s+x.v,0);
+  let donut,legend;
+  if(tot>0){
+    const r=52,C=2*Math.PI*r;let off=0;
+    const arcs=segs.map(s=>{const len=s.v/tot*C;const a=`<circle cx="64" cy="64" r="${r}" fill="none" stroke="${s.c}" stroke-width="16" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 64 64)"/>`;off+=len;return a;}).join("");
+    donut=`<svg viewBox="0 0 128 128" class="donut"><circle cx="64" cy="64" r="${r}" fill="none" stroke="var(--line)" stroke-width="16"/>${arcs}<text x="64" y="60" text-anchor="middle" class="d-tot">${eur(tot)}</text><text x="64" y="76" text-anchor="middle" class="d-sub">spent</text></svg>`;
+    legend=segs.map(s=>`<div class="lg-row"><span class="lg-dot" style="background:${s.c}"></span><span class="lg-name">${esc(s.n)}</span><span class="lg-val mono">${eur(s.v)}</span><span class="lg-pct">${Math.round(s.v/tot*100)}%</span></div>`).join("");
+  }else{donut=`<div class="donut-empty">No spending<br>yet</div>`;legend=`<div class="ins-cap" style="text-align:center">Log an expense to see where your money goes.</div>`;}
+  // ---- per-person split ----
+  const pcol={};pcol["Unassigned"]="var(--done)";
+  const palette=["#5566b0","#c98a1e","#3f7d63","#9d4f8c"];
+  state.config.people.forEach((p,i)=>{pcol[p.name]=palette[i%palette.length];});
+  const owners={};
+  (m.tx||[]).forEach(t=>{const acc=(state.accounts||[]).find(a=>a.id===t.account);const o=acc?acc.owner:"Unassigned";owners[o]=(owners[o]||0)+netOf(t);});
+  const oArr=Object.keys(owners).map(n=>({n,v:owners[n],c:pcol[n]||"#8a7d6b"})).filter(o=>o.v>0.005).sort((a,b)=>b.v-a.v);
+  const oTot=oArr.reduce((s,x)=>s+x.v,0);
+  let splitBar,splitLeg;
+  if(oTot>0){
+    splitBar=`<div class="splitbar">${oArr.map(o=>`<span style="width:${(o.v/oTot*100).toFixed(2)}%;background:${o.c}" title="${esc(o.n)}"></span>`).join("")}</div>`;
+    splitLeg=oArr.map(o=>`<div class="lg-row"><span class="lg-dot" style="background:${o.c}"></span><span class="lg-name">${esc(o.n)}</span><span class="lg-val mono">${eur(o.v)}</span><span class="lg-pct">${Math.round(o.v/oTot*100)}%</span></div>`).join("");
+  }else{splitBar="";splitLeg=`<div class="ins-cap">No attributed spending yet.</div>`;}
+  el.innerHTML=`
+    <div class="ins-card wide">
+      <div class="ins-top"><div class="ins-title">This cycle · ${cycleLabel(view)}</div></div>
+      ${headline}
+      ${curve}
+      <div class="ins-cap2">${paceMsg}</div>
+    </div>
+    <div class="ins-card">
+      <div class="ins-title">Where it goes</div>
+      <div class="donut-wrap">${donut}<div class="legend">${legend}</div></div>
+    </div>
+    <div class="ins-card">
+      <div class="ins-title">Who spent what</div>
+      ${splitBar}
+      <div class="legend" style="margin-top:12px">${splitLeg}</div>
+    </div>`;
 }
 const acctName=id=>{const a=(state.accounts||[]).find(x=>x.id===id);return a?a.name:"";};
 const MAYKEY="2026-05";
@@ -456,11 +595,12 @@ function render(){
   const curK=mk();
   const accBal={}; state.accounts.forEach(a=>accBal[a.id]=acctBal(a));
   const acctTot=state.accounts.reduce((s,a)=>s+accBal[a.id],0);
-  document.getElementById("monthLbl").textContent=MON[view.getMonth()]+" "+view.getFullYear();
+  document.getElementById("monthLbl").textContent=cycleLabel(view);
   animNum(document.getElementById("tIn"),inAct);
   animNum(document.getElementById("tSpent"),spent);
   animNum(document.getElementById("tSaved"),saved);
   animNum(document.getElementById("tBal"),budgetLeft);
+  renderInsights();
  
   const accEl=document.getElementById("accts"); accEl.innerHTML="";
   state.accounts.forEach((a,i)=>{const bal=accBal[a.id],low=bal<0;
@@ -476,10 +616,12 @@ function render(){
  
   const incEl=document.getElementById("income"); incEl.innerHTML=""; let incExp=0;
   state.config.people.forEach((p,i)=>{incExp+=p.income;const got=m.income[p.id]||0,paid=got>0;
+    const dt=(m.incomeDate&&m.incomeDate[p.id])?fmtDay(m.incomeDate[p.id]):"";
+    const sub=paid?(dt?("received "+dt):"received"):"varies — tap to enter";
     const c=document.createElement("div");c.className="inc";c.dataset.pid=p.id;c.style.animationDelay=(i*.05)+"s";
-    c.innerHTML=`<div class="who"><span class="pin ${paid?'':'pending'}"></span>${esc(p.name)}</div><div class="amt">${eur(got)}</div><div class="sub">expected ${eur(p.income)}</div><span class="tag ${paid?'in':'due'}">${paid?'Received':'Tap when received'}</span>`;
+    c.innerHTML=`<div class="who"><span class="pin ${paid?'':'pending'}"></span>${esc(p.name)}</div><div class="amt">${eur(got)}</div><div class="sub">${sub}</div><span class="tag ${paid?'in':'due'}">${paid?'Received':'Add salary'}</span>`;
     incEl.appendChild(c);});
-  document.getElementById("incNote").textContent=eur(inAct)+" of "+eur(incExp);
+  document.getElementById("incNote").textContent=eur(inAct)+" received this cycle";
  
   const headsEl=document.getElementById("heads");headsEl.innerHTML="";let budgetTot=0;
   state.config.heads.forEach((h,i)=>{budgetTot+=h.budget;const sp=spentByHead[h.id]||0,rem=h.budget-sp;
@@ -522,7 +664,8 @@ function render(){
     const valHtml=ts==="partial"
       ? `<div class="val"><span class="net">${eur(net)}</span><s class="gross">${eur(t.amount)}</s></div>`
       : `<div class="val">${eur(t.amount)}</div>`;
-    row.innerHTML=`<span class="dot" style="background:${colorFor(t.head)}"></span><div class="desc"><div class="note">${esc(lbl)}</div><div class="ct">${esc(h.name)}${t.sub?(' · '+esc(t.sub)):''}${t.account?(' · '+esc(acctName(t.account))):''}<span class="badges">${doneBadge}${refBadge}</span></div></div>${valHtml}<button class="del" data-del="${t.id}" aria-label="Delete">✕</button>`;
+    const txd=fmtDay(t.date);
+    row.innerHTML=`<span class="dot" style="background:${colorFor(t.head)}"></span><div class="desc"><div class="note" data-txedit="${t.id}" title="Tap to edit" style="cursor:pointer">${esc(lbl)}</div><div class="ct">${txd?(esc(txd)+' · '):''}${esc(h.name)}${t.sub?(' · '+esc(t.sub)):''}${t.account?(' · '+esc(acctName(t.account))):'<span style="color:var(--red)"> · no account</span>'}<span class="badges">${doneBadge}${refBadge}</span></div></div>${valHtml}<button class="del" data-del="${t.id}" aria-label="Delete">✕</button>`;
     list.appendChild(row);});}
   fillBars();
 }
@@ -570,7 +713,7 @@ function renderShopping(){
  
 const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const nextSeq=()=>Date.now();
-const monthDate=()=>mk()+"-28";
+const monthDate=()=>{const n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");};
  
 /* modals */
 const overlay=document.getElementById("overlay"),modal=document.getElementById("modal");
@@ -587,21 +730,55 @@ function addExpenseModal(preHead){
     <label>Category</label><select id="mHead">${heads}</select>
     <div id="mSubWrap" style="display:none"><label>Type</label><select id="mSub"></select></div>
     <label>Note (optional)</label><input id="mNote" type="text" maxlength="48" placeholder="e.g. Tesco">
+    <label>Date</label><div class="amt-wrap"><input id="mDate" type="date" value="${monthDate()}"></div>
     <button class="save" id="mSave">Save expense</button>`);
   const hs=document.getElementById("mHead"),sw=document.getElementById("mSubWrap"),ss=document.getElementById("mSub");
   function sync(){const h=state.config.heads.find(x=>x.id===hs.value);if(h&&h.subs){sw.style.display="";ss.innerHTML=h.subs.map(s=>`<option>${esc(s)}</option>`).join("");}else sw.style.display="none";}
   hs.onchange=sync;sync();
   document.getElementById("mSave").onclick=async()=>{const a=Math.round(parseFloat(document.getElementById("mAmt").value)*100)/100;if(!(a>0)){document.getElementById("mAmt").focus();return;}
     const h=hs.value,sub=(state.config.heads.find(x=>x.id===h)||{}).subs?ss.value:null,acc=document.getElementById("mAcc").value;
-    const tx={id:"e"+Date.now(),seq:nextSeq(),head:h,sub,amount:a,note:document.getElementById("mNote").value.trim(),account:acc,date:monthDate()};
+    const tx={id:"e"+Date.now(),seq:nextSeq(),head:h,sub,amount:a,note:document.getElementById("mNote").value.trim(),account:acc,date:(document.getElementById("mDate").value||monthDate())};
     ensureMonth().tx.push(tx);applyExpenseToAccount(tx);
     await save();closeModal();render();flashTile("spent");flashTile("balance");};
 }
+function editExpenseModal(id){
+  const m=ensureMonth();const t=m.tx.find(x=>x.id===id);if(!t)return;
+  const heads=state.config.heads.map(h=>`<option value="${h.id}" ${h.id===t.head?'selected':''}>${esc(h.name)}</option>`).join("");
+  const accs=state.accounts.map(a=>`<option value="${a.id}" ${a.id===t.account?'selected':''}>${esc(a.name)} — ${eur(acctBal(a))}</option>`).join("");
+  const noAcctOpt=`<option value="" ${!t.account?'selected':''}>— none —</option>`;
+  openModal(`<h3>Edit transaction</h3>
+    <label>Amount</label><div class="amt-wrap"><span class="cur">€</span><input id="mAmt" type="number" min="0" step="0.01" inputmode="decimal" value="${t.amount}" autofocus></div>
+    <label>Paid from</label><select id="mAcc">${noAcctOpt}${accs}</select>
+    <label>Category</label><select id="mHead">${heads}</select>
+    <div id="mSubWrap" style="display:none"><label>Type</label><select id="mSub"></select></div>
+    <label>Note</label><input id="mNote" type="text" maxlength="48" value="${esc(t.note||'')}">
+    <label>Date</label><div class="amt-wrap"><input id="mDate" type="date" value="${t.date||monthDate()}"></div>
+    <button class="save" id="mSave">Save changes</button>
+    <button class="save danger" id="mDel" style="margin-top:8px;background:transparent;color:var(--red);border:1.5px solid var(--red)">Delete transaction</button>`);
+  const hs=document.getElementById("mHead"),sw=document.getElementById("mSubWrap"),ss=document.getElementById("mSub");
+  function sync(){const h=state.config.heads.find(x=>x.id===hs.value);if(h&&h.subs){sw.style.display="";ss.innerHTML=h.subs.map(s=>`<option ${s===t.sub?'selected':''}>${esc(s)}</option>`).join("");}else sw.style.display="none";}
+  hs.onchange=sync;sync();
+  document.getElementById("mSave").onclick=async()=>{const a=Math.round(parseFloat(document.getElementById("mAmt").value)*100)/100;if(!(a>0)){document.getElementById("mAmt").focus();return;}
+    reverseExpenseFromAccount(t);
+    t.amount=a;t.head=hs.value;t.sub=(state.config.heads.find(x=>x.id===t.head)||{}).subs?ss.value:null;
+    t.note=document.getElementById("mNote").value.trim();t.account=document.getElementById("mAcc").value||null;
+    t.date=document.getElementById("mDate").value||t.date;
+    applyExpenseToAccount(t);
+    await save();closeModal();render();flashTile("spent");flashTile("balance");};
+  document.getElementById("mDel").onclick=async()=>{reverseRefundRouting(t);reverseExpenseFromAccount(t);m.tx=m.tx.filter(x=>x.id!==id);await save();closeModal();render();};
+}
 function incomeModal(pid){const p=state.config.people.find(x=>x.id===pid),m=ensureMonth();
-  openModal(`<h3>${esc(p.name)}'s income</h3><label>Received this month</label><div class="amt-wrap"><span class="cur">€</span><input id="mAmt" type="number" min="0" step="0.01" inputmode="decimal" value="${m.income[pid]||''}" placeholder="0.00" autofocus></div>
-    <button class="quick" id="mFull">Received in full — ${eur(p.income)}</button><button class="save" id="mSave">Save</button>`);
-  document.getElementById("mFull").onclick=async()=>{m.income[pid]=p.income;await save();closeModal();render();};
-  document.getElementById("mSave").onclick=async()=>{m.income[pid]=Math.round((parseFloat(document.getElementById("mAmt").value)||0)*100)/100;await save();closeModal();render();};}
+  if(!m.incomeDate)m.incomeDate={};
+  const today=(new Date()).toISOString().slice(0,10);
+  const curDate=m.incomeDate[pid]||today;
+  openModal(`<h3>${esc(p.name)}'s salary</h3>
+    <label>Salary received this cycle</label>
+    <div class="amt-wrap"><span class="cur">€</span><input id="mAmt" type="number" min="0" step="0.01" inputmode="decimal" value="${m.income[pid]||''}" placeholder="0.00" autofocus></div>
+    <label>Date received</label>
+    <div class="amt-wrap"><input id="mDate" type="date" value="${curDate}"></div>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:8px;font-weight:600;line-height:1.4">Type the actual amount that landed — it can be different every cycle. Set the date to the day it actually arrived, even if that's earlier or later than usual.</p>
+    <button class="save" id="mSave">Save salary</button>`);
+  document.getElementById("mSave").onclick=async()=>{m.income[pid]=Math.round((parseFloat(document.getElementById("mAmt").value)||0)*100)/100;if(!m.incomeDate)m.incomeDate={};m.incomeDate[pid]=document.getElementById("mDate").value||today;await save();closeModal();render();};}
 function txStatusModal(id){const m=ensureMonth();const t=m.tx.find(x=>x.id===id);if(!t)return;
   const cur=refundOf(t);
   const defAcc=t.refundAccount||t.account||(state.accounts[0]&&state.accounts[0].id)||"";
@@ -760,7 +937,7 @@ function configModal(){
     await save();closeModal();render();};}
  
 /* excel */
-function buildRows(){const {m,inAct,spentByHead,spent,saved,balance}=calc();const mLabel=MONF[view.getMonth()]+" "+view.getFullYear();
+function buildRows(){const {m,inAct,spentByHead,spent,saved,balance}=calc();const mLabel=cycleLabel(view);
   const rows=[["MONTHLY EXPENSES TRACKER (€) — "+mLabel],[],["Category","Projected","Actual","Remaining"],["INCOME","","",""]];let incExp=0;
   state.config.people.forEach(p=>{rows.push([p.name+" – Income",p.income,m.income[p.id]||0,""]);incExp+=p.income;});
   rows.push(["Total Income",incExp,inAct,""],[],["EXPENSES","","",""]);let budTot=0;
@@ -805,10 +982,83 @@ document.getElementById("xlsBtn").onclick=exportReport;
 document.getElementById("trBtn").onclick=transferModal;
 document.getElementById("lendBtn").onclick=lendSplitModal;
 document.getElementById("calcBtn").onclick=calcModal;
+function applyAdjustment(adj){setAccountBalance(adj.account,adj.amount);}
+function reverseAdjustment(adj){setAccountBalance(adj.account,-adj.amount);}
+function accountingModal(){
+  if(!state.adjustments)state.adjustments=[];
+  const refreshAndReopen=async()=>{await save();render();accountingModal();};
+  const {m,inAct,spent,saved,budgetLeft,budget,spentByHead}=calc();
+  const refunds=m.tx.reduce((s,t)=>s+refundOf(t),0);
+  const gross=m.tx.reduce((s,t)=>s+t.amount,0);
+  const transfers=m.transfers||[];
+  const moved=transfers.reduce((s,t)=>s+t.amount,0);
+  const totalAvail=state.accounts.reduce((s,a)=>s+acctBal(a),0);
+  const freeAfterSaving=totalAvail-saved;
+  // posting checks
+  const issues=[];
+  const noAcct=m.tx.filter(t=>!t.account);
+  if(noAcct.length)issues.push(`${noAcct.length} expense${noAcct.length>1?'s':''} have no account set (won't move any tile): ${noAcct.slice(0,3).map(t=>esc(t.note||t.sub||'?')).join(", ")}${noAcct.length>3?'…':''}`);
+  const neg=state.accounts.filter(a=>acctBal(a)<-0.005);
+  if(neg.length)issues.push(`Negative balance on: ${neg.map(a=>esc(a.name)+" ("+eur(acctBal(a))+")").join(", ")}`);
+  if(inAct>0)issues.push(`Salary of ${eur(inAct)} is logged as income but isn't auto-added to any account tile — update the tiles (or your bank balances already include it).`);
+  if(saved>0)issues.push(`${eur(saved)} is earmarked as savings. Your Total available (${eur(totalAvail)}) still includes it; truly free to spend is ${eur(freeAfterSaving)}.`);
+  const badTr=transfers.filter(t=>t.from===t.to||!(t.amount>0));
+  if(badTr.length)issues.push(`${badTr.length} transfer(s) look off (same account or €0).`);
+  const seen={},dups=[];
+  m.tx.forEach(t=>{const k=(t.note||t.sub||'')+"|"+t.amount;if(seen[k])dups.push(t.note||t.sub||'?');else seen[k]=1;});
+  if(dups.length)issues.push(`Possible duplicate entries (same name & amount): ${[...new Set(dups)].slice(0,4).map(esc).join(", ")}.`);
+  const identityOk=Math.abs((inAct-spent-saved)-budgetLeft)<0.02;
+  const tallyRows=[
+    ["Salary received this cycle",eur(inAct)],
+    ["Spent (gross)",eur(gross)],
+    ["– Refunds back",eur(refunds)],
+    ["Spent (net)",eur(spent)],
+    ["Saved / set aside",eur(saved)],
+    ["Left to spend (in − net spent − saved)",eur(inAct-spent-saved)],
+    ["Budget set for the cycle",eur(budget)],
+    ["Transfers logged",transfers.length+" ("+eur(moved)+" moved, nets to €0.00)"],
+  ].map(r=>`<div class="acc-row"><span>${r[0]}</span><b class="mono">${r[1]}</b></div>`).join("");
+  const acctRows=state.accounts.map(a=>`<div class="acc-row"><span>${esc(a.name)}</span><b class="mono">${eur(acctBal(a))}</b></div>`).join("")
+    +`<div class="acc-row tot"><span>Total available</span><b class="mono">${eur(totalAvail)}</b></div>`
+    +`<div class="acc-row"><span>Truly free (after savings)</span><b class="mono">${eur(freeAfterSaving)}</b></div>`;
+  const issueHtml=issues.length?issues.map(i=>`<div class="acc-flag">⚠ ${i}</div>`).join(""):`<div class="acc-ok">✓ No posting problems detected for this cycle.</div>`;
+  const adjList=(state.adjustments.length?state.adjustments.slice().reverse().map(a=>`<div class="acc-row"><span>${esc(a.note||'Adjustment')} · ${esc(acctName(a.account))}</span><span class="mono" style="color:${a.amount<0?'var(--red)':'var(--green)'}">${a.amount<0?'':'+'}${eur(a.amount)}</span><button class="acc-del" data-adjdel="${a.id}">✕</button></div>`).join(""):`<div class="acc-cap">No manual adjustments yet.</div>`);
+  const accOpts=state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)} — ${eur(acctBal(a))}</option>`).join("");
+  openModal(`<h3>Accounting — ${cycleLabel(view)}</h3>
+    <div class="acc-sec">Tally</div>${tallyRows}
+    <div class="acc-note">${identityOk?'✓ The books balance: money in minus net spending minus savings equals your left-to-spend.':'⚠ The headline figures do not reconcile exactly — check savings and refunds.'}</div>
+    <div class="acc-sec">Accounts</div>${acctRows}
+    <div class="acc-sec">Posting check</div>${issueHtml}
+    <div class="acc-sec">Reconcile to your real bank balance</div>
+    <p class="acc-cap">Pick an account, type what your bank actually shows, and the gap is logged as an adjustment (proper bookkeeping rather than silently overwriting).</p>
+    <select id="rcAcc">${accOpts}</select>
+    <div class="amt-wrap" style="margin-top:8px"><span class="cur">€</span><input id="rcVal" type="number" step="0.01" inputmode="decimal" placeholder="real balance"></div>
+    <button class="save" id="rcBtn" style="margin-top:8px">Reconcile</button>
+    <div class="acc-sec">Manual adjustment (sandbox)</div>
+    <p class="acc-cap">Add or remove money from an account with a note — for corrections, cash, interest, anything. Use a minus sign to take money out.</p>
+    <select id="ajAcc">${accOpts}</select>
+    <input id="ajNote" type="text" maxlength="40" placeholder="note (e.g. cash deposit)" style="margin-top:8px">
+    <div class="amt-wrap" style="margin-top:8px"><span class="cur">€</span><input id="ajVal" type="number" step="0.01" inputmode="decimal" placeholder="+ or − amount"></div>
+    <button class="save" id="ajBtn" style="margin-top:8px">Post adjustment</button>
+    <div class="acc-sec">Adjustment log</div>${adjList}`);
+  document.getElementById("rcBtn").onclick=async()=>{const id=document.getElementById("rcAcc").value;const a=state.accounts.find(x=>x.id===id);const real=Math.round((parseFloat(document.getElementById("rcVal").value))*100)/100;if(isNaN(real))return;const diff=Math.round((real-acctBal(a))*100)/100;if(Math.abs(diff)<0.005){closeModal();return;}const adj={id:"adj"+Date.now(),account:id,amount:diff,note:"Reconcile to bank",date:monthDate()};state.adjustments.push(adj);applyAdjustment(adj);refreshAndReopen();};
+  document.getElementById("ajBtn").onclick=async()=>{const id=document.getElementById("ajAcc").value;const v=Math.round((parseFloat(document.getElementById("ajVal").value))*100)/100;if(!v||isNaN(v))return;const adj={id:"adj"+Date.now(),account:id,amount:v,note:document.getElementById("ajNote").value.trim()||"Adjustment",date:monthDate()};state.adjustments.push(adj);applyAdjustment(adj);refreshAndReopen();};
+  modal.querySelectorAll("[data-adjdel]").forEach(b=>b.onclick=async()=>{const adj=state.adjustments.find(x=>x.id===b.dataset.adjdel);if(adj){reverseAdjustment(adj);state.adjustments=state.adjustments.filter(x=>x.id!==adj.id);}refreshAndReopen();});
+}
+document.getElementById("acctBtn").onclick=accountingModal;
 document.getElementById("addShop").onclick=shopModal;
 document.getElementById("themeBtn").onclick=toggleTheme;
 document.getElementById("prev").onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);render();slideContent(-1);};
 document.getElementById("next").onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);render();slideContent(1);};
+document.getElementById("monthLbl").onclick=()=>cycleModal();
+function cycleModal(){const d=cycleDay();const {start,end}=cycleSpan(view);
+  openModal(`<h3>Pay-cycle day</h3>
+    <p style="font-size:13px;color:var(--ink-soft);font-weight:600;margin-bottom:4px">Each budget period runs from this day of the month to the day before it the next month. Set it to the day your salary lands.</p>
+    <label>Cycle starts on day</label>
+    <div class="amt-wrap"><input id="cDay" type="number" min="1" max="28" step="1" inputmode="numeric" value="${d}" autofocus></div>
+    <p style="font-size:12px;color:var(--ink-soft);margin-top:8px;font-weight:600;line-height:1.4">Pick a day from 1–28. If your pay lands on the 29th, 30th or 31st, use 28. The current period would read <b>${cycleLabel(view)}</b>.</p>
+    <button class="save" id="cSave">Save cycle day</button>`);
+  document.getElementById("cSave").onclick=async()=>{let v=Math.round(parseFloat(document.getElementById("cDay").value)||25);v=Math.min(28,Math.max(1,v));state.config.cycleStartDay=v;view=currentCycleStart();await save();closeModal();render();};}
 document.getElementById("accts").addEventListener("click",e=>{const c=e.target.closest("[data-aid]");if(c)accountModal(c.dataset.aid);});
 document.getElementById("income").addEventListener("click",e=>{const c=e.target.closest("[data-pid]");if(c)incomeModal(c.dataset.pid);});
 document.getElementById("savings").addEventListener("click",e=>{const c=e.target.closest("[data-sid]");if(c)savingModal(c.dataset.sid);});
@@ -817,6 +1067,7 @@ document.getElementById("loans").addEventListener("click",async e=>{
   const c=e.target.closest("[data-loan]");if(c)repaymentModal(c.dataset.loan);});
 document.getElementById("heads").addEventListener("click",e=>{const c=e.target.closest("[data-head]");if(c)addExpenseModal(c.dataset.head);});
 document.getElementById("txlist").addEventListener("click",async e=>{
+  const ed=e.target.closest("[data-txedit]");if(ed){editExpenseModal(ed.dataset.txedit);return;}
   const dn=e.target.closest("[data-txdone]");if(dn){const m=ensureMonth();const t=m.tx.find(x=>x.id===dn.dataset.txdone);if(t){t.cleared=!t.cleared;await save();render();}return;}
   const st=e.target.closest("[data-txstat]");if(st){txStatusModal(st.dataset.txstat);return;}
   const b=e.target.closest("[data-del]");if(b){const m=ensureMonth();const t=m.tx.find(x=>x.id===b.dataset.del);reverseRefundRouting(t);reverseExpenseFromAccount(t);m.tx=m.tx.filter(t=>t.id!==b.dataset.del);await save();render();return;}
@@ -836,8 +1087,8 @@ function migrateAccounts(){
     const jRev=old.j_rev!=null?old.j_rev:(old.revolut!=null?old.revolut:0);
     const bAib=old.b_aib!=null?old.b_aib:778.81, bRev=old.b_rev!=null?old.b_rev:341.80;
     state.accounts=[
-      {id:"j_aib",owner:"Justin (Chaa)",bank:"AIB",name:"Justin · AIB",balance:jAib},
-      {id:"j_rev",owner:"Justin (Chaa)",bank:"Revolut",name:"Justin · Revolut",balance:jRev},
+      {id:"j_aib",owner:"Jestin (Chaa)",bank:"AIB",name:"Jestin · AIB",balance:jAib},
+      {id:"j_rev",owner:"Jestin (Chaa)",bank:"Revolut",name:"Jestin · Revolut",balance:jRev},
       {id:"b_aib",owner:"Boba",bank:"AIB",name:"Boba · AIB",balance:bAib},
       {id:"b_rev",owner:"Boba",bank:"Revolut",name:"Boba · Revolut",balance:bRev},
     ];
@@ -887,7 +1138,11 @@ function normalize(s){
   if(!state.ui)state.ui={theme:"light"};
   if(!state.shopping)state.shopping=[];
   if(!state.loans)state.loans=[];
+  if(!state.adjustments)state.adjustments=[];
   if(!state.months)state.months={};
+  if(state.config&&!state.config.cycleStartDay)state.config.cycleStartDay=25;
+  (state.config&&state.config.people||[]).forEach(p=>{if(p.name)p.name=p.name.replace(/Justin/g,"Jestin");});
+  (state.accounts||[]).forEach(a=>{if(a.name)a.name=a.name.replace(/Justin/g,"Jestin");if(a.owner)a.owner=a.owner.replace(/Justin/g,"Jestin");});
   migrateAccounts();
   migrateToManualBalances();
   return state;
@@ -902,7 +1157,7 @@ function setSync(mode){
 }
 function firstBoot(){
   applyTheme();
-  if(state.months["2026-05"])view=new Date(2026,4,1);
+  view=currentCycleStart();
   render();fbBooted=true;
 }
 async function localBoot(){
@@ -1004,4 +1259,3 @@ startApp();
   resize();init();step();
 })();
 </script>
- 
